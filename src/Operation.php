@@ -129,15 +129,20 @@ class Operation
             }
         }
 
+        $isArray = false;
+        if (substr($paramType, 0, strlen("ArrayOf")) == "ArrayOf" && array_key_exists($singleType = substr($paramType, strlen("ArrayOf")), $validTypes)) {
+            $paramType = $singleType;
+            $isArray = true;
+        }
         $ret['type'] = $paramType;
 
         foreach ($validTypes as $type) {
             if ($paramType == $type->getIdentifier()) {
                 if ($type instanceof Pattern) {
-                    $ret['type'] = $type->getDatatype();
+                    $ret['type'] = ($isArray) ? $type->getDatatype()."[]" : $type->getDatatype();
                     $ret['desc'] = 'Restriction pattern: ' . $type->getValue();
                 } else {
-                    $ret['type'] = $type->getPhpIdentifier();
+                    $ret['type'] = ($isArray) ? $type->getPhpIdentifier()."[]" : $type->getPhpIdentifier();
 
                     if ($type instanceof Enum) {
                         $ret['desc'] = 'Constant: ' . $type->getDatatype() . ' - ' . 'Valid values: ' . $type->getValidValues();

@@ -142,15 +142,18 @@ class Generator implements GeneratorInterface
                 $type = new ComplexType($this->config, $typeNode->getName());
                 $this->log('Loading type ' . $type->getPhpIdentifier());
 
-                $type->setAbstract($typeNode->isAbstract());
-
-                foreach ($typeNode->getParts() as $name => $typeName) {
-                    // There are 2 ways a wsdl can indicate that a field accepts the null value -
-                    // by setting the "nillable" attribute to "true" or by setting the "minOccurs" attribute to "0".
-                    // See http://www.ibm.com/developerworks/webservices/library/ws-tip-null/index.html
-                    $nullable = $typeNode->isElementNillable($name) || $typeNode->getElementMinOccurs($name) === 0;
-                    $type->addMember($typeName, $name, $nullable);
+                if($typeNode->isArray()) {
+                    $type = new ComplexType($this->config, $typeNode->getRestriction());
+                } else {
+                    foreach ($typeNode->getParts() as $name => $typeName) {
+                        // There are 2 ways a wsdl can indicate that a field accepts the null value -
+                        // by setting the "nillable" attribute to "true" or by setting the "minOccurs" attribute to "0".
+                        // See http://www.ibm.com/developerworks/webservices/library/ws-tip-null/index.html
+                        $nullable = $typeNode->isElementNillable($name) || $typeNode->getElementMinOccurs($name) === 0;
+                        $type->addMember($typeName, $name, $nullable);
+                    }
                 }
+                $type->setAbstract($typeNode->isAbstract());
             } elseif ($enumValues = $typeNode->getEnumerations()) {
                 $type = new Enum($this->config, $typeNode->getName(), $typeNode->getRestriction());
                 array_walk($enumValues, function ($value) use ($type) {
